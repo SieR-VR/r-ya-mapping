@@ -137,16 +137,40 @@ pub fn run_start(opts: StartOpts) -> Result<()> {
     ));
 
     // --- thumbnail ----------------------------------------------------
-    // Beat Saber wants a square cover. Try yt-dlp's best thumbnail; if it's
-    // not 1:1 we keep it (so the map is still valid) but warn the mapper so
-    // they can crop it by hand before publishing.
+    // Beat Saber wants a square cover. For a YouTube Music link we ask yt-dlp
+    // for the best-resolution thumbnail and *center-crop* it to square (YT
+    // Music videos are often a single static album-art frame, so cropping the
+    // max-res frame yields the canonical 1:1 cover). For a regular YouTube
+    // link we keep yt-dlp's thumbnail as-is; if it's not square, we warn the
+    // mapper so they can crop it by hand before publishing.
     let cover_path = map_dir.join("cover.jpg");
     let mut cover_filename: Option<String> = None;
+    let is_music = youtube::is_youtube_music(&opts.uri);
     match youtube::download_thumbnail(&opts.uri, &cover_path) {
         Ok(p) => match audio::image_dimensions(&p).unwrap_or(None) {
             Some((w, h)) => {
                 if w == h {
                     println!("→ cover: {w}x{h} (square, good to go)");
+                } else if is_music {
+                    // YouTube Music link: crop to the square album cover.
+                    let cropped_tmp = map_dir.join("cover.square.jpg");
+                    match audio::center_crop_square(&p, &cropped_tmp) {
+                        Ok(()) => {
+                            if let Err(e) = std::fs::rename(&cropped_tmp, &p) {
+                                eprintln!("⚠ cropped cover but could not rename: {e}");
+                            }
+                            let dim = audio::image_dimensions(&p)
+                                .unwrap_or(Some((w.min(h), w.min(h))))
+                                .unwrap();
+                            println!(
+                                "→ cover (YT Music): {w}x{h} → square-cropped to {}x{} (good to go)",
+                                dim.0, dim.1
+                            );
+                        }
+                        Err(e) => eprintln!(
+                            "⚠ could not square-crop YT Music cover ({w}x{h}): {e}; kept as-is"
+                        ),
+                    }
                 } else {
                     eprintln!(
                         "⚠ cover thumbnail is {w}x{h} (NOT square). Beat Saber\n\

@@ -1,15 +1,22 @@
-// Beat Saber map data model: `Info.dat` and `BPMInfo.dat` structured exactly
-// the way the reference map (`refs/Beni Kanzashi`) lay them out, so the
-// generated map plays nice in ChroMapper / MMA2 / Eek! without surprises.
+// Beat Saber map data model.
 //
-// Field names mirror Beat Saber's underscore-prefixed JSON conventions, so we
-// silence the snake_case lint for this module.
+// The generated map follows the **v3** schema per the BSMG wiki
+// (https://bsmg.wiki/mapping/map-format.html):
+//   * `Info.dat`     - v2-style layout (`_version: "2.1.0"`); v3 does not
+//                      change the info file.
+//   * Beatmap files  - v3 (`"version": "3.3.0"`): abbreviated, non-underscored
+//                      fields (`b`, `x`, `y`, `c`, `d`, ...).
+//   * `BPMInfo.dat`  - legacy `"2.0.0"` audio data (the 4.0.0 `AudioData.dat`
+//                      layout is exclusive to the v4 schema).
+//
+// Field names mirror Beat Saber's JSON conventions (mixed underscore-prefixed
+// and single-letter keys), so the snake_case lint is silenced for this module.
 
 #![allow(non_snake_case)]
 
 use serde::{Deserialize, Serialize};
 
-/// v2.1.0 `Info.dat`.
+/// v2.1.0-style `Info.dat` (unchanged by the v3 schema).
 #[derive(Serialize, Deserialize)]
 pub struct InfoDat {
     pub _version: String,
@@ -50,7 +57,7 @@ pub struct DifficultyBeatmap {
     pub _environmentNameIdx: i64,
 }
 
-/// v2.0.0 `BPMInfo.dat`.
+/// Legacy 2.0.0 `BPMInfo.dat` (the audio-data format paired with v3 maps).
 #[derive(Serialize, Deserialize)]
 pub struct BpmInfoDat {
     pub _version: String,
@@ -67,17 +74,28 @@ pub struct BpmRegion {
     pub _endBeat: f64,
 }
 
-/// An empty (but valid) v2.x difficulty beatmap file body.
+/// An empty (but valid) v3 difficulty beatmap file body.
+///
+/// `colorNotes`, `bombNotes`, and `obstacles` must be explicitly defined even
+/// when empty, or the song-select screen cannot display NPS/note counts
+/// (per the BSMG wiki "Defaulted Properties" warning). The remaining
+/// collections are spelled out for editor friendliness.
 pub fn empty_beatmap_json() -> serde_json::Value {
     serde_json::json!({
-        "_version": "2.1.0",
-        "_BPMChanges": [],
-        "_events": [],
-        "_notes": [],
-        "_waypoints": [],
-        "_customData": {
-            "_time": 0.0,
-            "_BPMChanges": []
-        }
+        "version": "3.3.0",
+        "bpmEvents": [],
+        "rotationEvents": [],
+        "colorNotes": [],
+        "bombNotes": [],
+        "obstacles": [],
+        "sliders": [],
+        "burstSliders": [],
+        "basicBeatmapEvents": [],
+        "colorBoostBeatmapEvents": [],
+        "waypoints": [],
+        "basicEventTypesWithKeywords": {
+            "d": []
+        },
+        "useNormalEventsAsCompatibleEvents": false
     })
 }

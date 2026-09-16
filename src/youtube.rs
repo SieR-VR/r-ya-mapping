@@ -42,6 +42,14 @@ struct DumpJson {
     duration: Option<f64>,
 }
 
+/// Whether the given URI points at YouTube Music (rather than vanilla
+/// YouTube). YouTube Music pages present a different "now-playing" cover -
+/// typically the square album art - and we use that cue to fetch a
+/// square-cropped cover instead of the 16:9 video thumbnail.
+pub fn is_youtube_music(uri: &str) -> bool {
+    uri.contains("music.youtube.com") || uri.contains("music.aa.youtube.com")
+}
+
 /// Extract the YouTube video id from any common URI form.
 pub fn extract_id(uri: &str) -> Result<String> {
     // watch?v=ID, youtu.be/ID, /shorts/ID, /embed/ID, or a bare id.

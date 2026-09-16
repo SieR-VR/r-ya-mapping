@@ -236,3 +236,44 @@ pub fn image_dimensions(path: &Path) -> Result<Option<(u32, u32)>> {
         _ => Ok(None),
     }
 }
+
+/// Center-crop `src` to a square (the smaller of its dimensions) and write
+/// the result to `dst` as JPEG. Used to produce a Beat Saber-ready square
+/// cover from a YouTube Music thumbnail, whose album art is usually the
+/// full video frame; cropping to 1:1 yields the canonical cover square.
+pub fn center_crop_square(src: &Path, dst: &Path) -> Result<()> {
+    require_ffmpeg()?;
+    let _ = std::fs::remove_file(dst);
+    let status = Command::new("ffmpeg")
+        .args([
+            "-y",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-i",
+            &src.to_string_lossy(),
+            // crop=w=h=min(iw,ih), centered. Commas are the ffmpeg filter
+            // separator; the colons inside are nested args.
+            "-vf",
+            "crop=min(iw\\,ih):min(iw\\,ih):(iw-min(iw\\,ih))/2:(ih-min(iw\\,ih))/2",
+            "-q:v",
+            "2", // high-quality jpeg
+            &dst.to_string_lossy(),
+        ])
+        .status()
+        .context("failed to spawn ffmpeg")?;
+    if !status.success() {
+        bail!(
+            "ffmpeg failed to center-crop {} -> {}",
+            src.display(),
+            dst.display()
+        );
+    }
+    if !dst.exists() {
+        bail!(
+            "expected cropped cover at {} but it was not created",
+            dst.display()
+        );
+    }
+    Ok(())
+}

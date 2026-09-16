@@ -1,9 +1,9 @@
 // Beatmap folder scaffolding helpers.
 //
-// Writes out an empty, but valid, Beat Saber v2.1.0 CustomWIPLevels folder
-// (`Info.dat`, `BPMInfo.dat`, and the difficulty beatmap file named in
-// `Info.dat`). Style matches the reference map: pretty JSON with the familiar
-// 2-space indentation and CRLF line endings, matching the editor's output.
+// Writes out an empty, but valid, Beat Saber CustomWIPLevels folder in the
+// **v3** schema (`Info.dat`, `BPMInfo.dat`, and a v3 difficulty beatmap file
+// named in `Info.dat`). Pretty JSON with 2-space indentation and CRLF line
+// endings, matching what editors produce.
 
 use crate::model::{
     empty_beatmap_json, BpmInfoDat, BpmRegion, DifficultyBeatmap, DifficultyBeatmapSet, InfoDat,

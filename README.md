@@ -73,9 +73,14 @@ What it does, in order:
    and the intro is > 1.5 s; `_songTimeOffset`
    is deprecated, so the audio is physically
    repositioned instead)
-7. finalizes as song.ogg (opus -> Vorbis, padding baked in)
-8. grabs the thumbnail (cover.jpg; warns if it's not square)
-9. writes Info.dat, BPMInfo.dat, and an empty beatmap
+ 7. finalizes as song.ogg (opus -> Vorbis, padding baked in)
+ 8. grabs the thumbnail (cover.jpg; square-cropped for YouTube Music
+    links, warns if a regular thumbnail isn't square)
+ 9. writes Info.dat, BPMInfo.dat, and an empty v3 beatmap
+
+The map uses the v3 schema (game 1.20.0+): the beatmap file is
+`"version": "3.3.0"` with the abbreviated field names; `Info.dat` and
+`BPMInfo.dat` keep their v2-style layouts since v3 doesn't change them.
 
 Overrides, if the auto-detected values are wrong:
 
